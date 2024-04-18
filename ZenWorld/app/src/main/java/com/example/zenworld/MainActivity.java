@@ -104,10 +104,18 @@ public class MainActivity extends AppCompatActivity {
         // Recorremos los botones de letras en el círculo
         for(int i = 0; i < btnIdsLetra.length; i++) {
             Button btn = findViewById(btnIdsLetra[i]); // get id
-            letrasCirculo.add(btn.getText().charAt(0)); // add letter on circle
+            char letra = btn.getText().charAt(0); // get letter on circle
+            // Añadimos la letra en el circulo si no existe en la lista
+            if (!letrasCirculo.contains(letra)) {
+                letrasCirculo.add(letra);
+            }
         }
     }
 
+    /**
+     * Método que desordena las letras del círculo
+     * y las asigna a los botones de letras.
+     */
     private void randomCircle() {
         Collections.shuffle(letrasCirculo);
         for (int i = 0; i < btnIdsLetra.length; i++) {
@@ -116,6 +124,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Método que muestra una ventana emergente con las palabras
+     * y aciertos conseguidos.
+     */
     public void mostrarVentanaEmergeneteBonus() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -130,5 +142,13 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("OK", null);
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    public TextView[] crearFilaTextViews(int guia, int lletres) {
+        return null;
+    }
+
+    public void esPalabraSolucion(String paraula1, String paraula2) {
+
     }
 }
