@@ -8,9 +8,11 @@ import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.zenworld.R.id;
@@ -72,60 +74,16 @@ public class MainActivity extends AppCompatActivity {
         widthDisplay = displayMetrics.widthPixels;
 
         int[] guias = {R.id.guideline1, R.id.guideline2, R.id.guideline3, R.id.guideline4, R.id.guideline5};
-        int[] numLetras = {5,4,3,4,3};
+        int[] numLetras = {3,3,3,4,5};
 
         for (int i = 0; i < guias.length; i++) {
-            TextView[] textViews = crearFilaTextViewss(guias[i], numLetras[i]);
+            TextView[] textViews = crearFilaTextViewsGood(guias[i], numLetras[i]);
             for (TextView textView : textViews) {
                 // Configuramos el color de fondo para cada TextView
-                textView.setText("??????");
+                textView.setText("");
                 textView.setBackgroundColor(Color.BLUE);
             }
         }
-    }
-
-    public TextView[] crearFilaTextViewss(int guia, int lletres) {
-        TextView[] textViews = new TextView[lletres];
-
-        // Calcular el ancho de cada TextView
-        int width = widthDisplay / lletres;
-
-        TextView previousTextView = null;
-
-        for (int i = 0; i < lletres; i++) {
-            TextView textView = new TextView(this);
-            textView.setId(View.generateViewId());
-            textView.setText("");
-            textView.setTextSize(20);
-            textView.setBackgroundColor(Color.BLUE);
-
-            // Añadir TextView al ConstraintLayout
-            constraintLayout.addView(textView);
-            textViews[i] = textView;
-
-            // Configurar restricciones
-            ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(width, width);
-            textView.setLayoutParams(params);
-
-            ConstraintSet constraintSet = new ConstraintSet();
-            constraintSet.clone(constraintLayout);
-            int id = textView.getId();
-            
-            // Si no es el primer TextView, conectar al TextView anterior en la fila
-            if (previousTextView != null) {
-                constraintSet.connect(id, ConstraintSet.START, previousTextView.getId(), ConstraintSet.END, 0);
-            } else {
-                // Si es el primer TextView, conectar a la guía
-                constraintSet.connect(id, ConstraintSet.START, guia, ConstraintSet.START, 0);
-            }
-
-            constraintSet.connect(id, ConstraintSet.TOP, guia, ConstraintSet.TOP, 0);
-            constraintSet.applyTo(constraintLayout);
-
-            previousTextView = textView; // Actualizar el TextView anterior
-        }
-
-        return textViews;
     }
 
     public void configurarBtnLetra(int btnId) {
@@ -220,41 +178,41 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    public TextView[] crearFilaTextViews(int guia, int lletres) {
-        ConstraintSet constraintSet = new ConstraintSet();
+    public TextView[] crearFilaTextViewsGood(int guia, int lletres) {
         TextView[] textViews = new TextView[lletres];
+
+        // Establecer un tamaño fijo para cada TextView
+        int width = 150; // Reemplaza FIXED_SIZE con el tamaño que quieres para tus TextViews
+
+        // Crear un LinearLayout para contener los TextViews
+        LinearLayout linearLayout = new LinearLayout(this);
+        linearLayout.setId(View.generateViewId());
+        linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+        linearLayout.setGravity(Gravity.CENTER);
+        constraintLayout.addView(linearLayout);
+
+        // Configurar restricciones para el LinearLayout
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(constraintLayout);
+        constraintSet.connect(linearLayout.getId(), ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START, 0);
+        constraintSet.connect(linearLayout.getId(), ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END, 0);
+        constraintSet.connect(linearLayout.getId(), ConstraintSet.TOP, guia, ConstraintSet.TOP, 0);
+        constraintSet.applyTo(constraintLayout);
 
         for (int i = 0; i < lletres; i++) {
             TextView textView = new TextView(this);
             textView.setId(View.generateViewId());
             textView.setText("");
             textView.setTextSize(20);
+            textView.setBackgroundColor(Color.BLUE);
 
-            // Añadir TextView al ConstraintLayout
-            constraintLayout.addView(textView);
+            // Añadir TextView al LinearLayout
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, width);
+            params.setMargins(10, 10, 10, 10);
+            textView.setLayoutParams(params);
+            linearLayout.addView(textView);
             textViews[i] = textView;
         }
-
-        constraintSet.clone(constraintLayout);
-        for (int i = 0; i < lletres; i++) {
-            TextView textView = textViews[i];
-            int id = textView.getId();
-
-            // Conectar TextViews al guideline
-            constraintSet.connect(id, ConstraintSet.START, guia, ConstraintSet.START, 0);
-            constraintSet.connect(id, ConstraintSet.END, guia, ConstraintSet.END, 0);
-
-            // Calcular los márgenes superiores e inferiores
-            int topMargin = heightDisplay / 10; // Margen superior
-            int bottomMargin = heightDisplay / 20; // Margen inferior
-            constraintSet.connect(id, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP, topMargin * (i + 1));
-            constraintSet.connect(id, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM, bottomMargin * (lletres - i));
-
-            // Establecer anchura y altura de los TextView
-            constraintSet.constrainWidth(id, ConstraintSet.WRAP_CONTENT);
-            constraintSet.constrainHeight(id, ConstraintSet.WRAP_CONTENT);
-        }
-        constraintSet.applyTo(constraintLayout);
 
         return textViews;
     }
