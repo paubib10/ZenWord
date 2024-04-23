@@ -41,10 +41,8 @@ public class MainActivity extends AppCompatActivity {
         textViewPalabra = findViewById(R.id.textView1);
         constraintLayout = findViewById(R.id.constraintLayout);
 
-        // BOTONES LETRAS DEL CÍRCULO
-        for (int btnId : btnIdsLetra) {
-            configurarBtnLetra(btnId);
-        }
+        // ASIGNAR LETRAS A BOTONES
+        asignarLetrasABotones("REVISTA");
 
         // BOTÓN CLEAR
         Button btnClear = findViewById(R.id.button9);
@@ -86,32 +84,43 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void configurarBtnLetra(int btnId) {
-        Button btn = findViewById(btnId);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                setLetra(view);
+    private void asignarLetrasABotones(String palabra) {
+        // Dividir la palabra en letras
+        char[] letras = palabra.toCharArray();
+
+        // Recorrer los botones de letras en el círculo
+        for (int i = 0; i < btnIdsLetra.length; i++) {
+            Button button = findViewById(btnIdsLetra[i]);
+            // Verificar si hay letras disponibles
+            if (i < letras.length) {
+                // Asignar la letra al botón
+                button.setText(String.valueOf(letras[i]));
+                // Habilitar el botón y hacerlo visible
+                button.setEnabled(true);
+                button.setVisibility(View.VISIBLE);
+
+                // Establecer OnClickListener para el botón
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // Obtener la letra del botón
+                        Button clickedButton = (Button) v;
+                        String letra = clickedButton.getText().toString();
+
+                        // Actualizar el TextView con la letra
+                        textViewPalabra.append(letra);
+
+                        // Cambiar el color del botón y deshabilitarlo
+                        clickedButton.setTextColor(Color.GRAY);
+                        clickedButton.setEnabled(false);
+                    }
+                });
+            } else {
+                // Si no hay más letras, desactivar el botón y hacerlo invisible
+                button.setEnabled(false);
+                button.setVisibility(View.INVISIBLE);
             }
-        });
-    }
-
-    /**
-     * Método que añade la letra del botón al TextView de la palabra.
-     * @param view Botón pulsado
-     */
-    private void setLetra(View view) {
-        Button btn = (Button) view;
-        String letra = btn.getText().toString();
-
-        // Agregar letra
-        String palabraActual = textViewPalabra.getText().toString();
-        palabraActual += letra;
-        textViewPalabra.setText(palabraActual);
-
-        // Desacticar boton y cambiar color gris
-        btn.setEnabled(false);
-        btn.setTextColor(Color.GRAY);
+        }
     }
 
     public void clearPalabra(View view) {
