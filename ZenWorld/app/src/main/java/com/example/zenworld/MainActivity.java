@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         widthDisplay = displayMetrics.widthPixels;
 
         int[] guias = {R.id.guideline1, R.id.guideline2, R.id.guideline3, R.id.guideline4, R.id.guideline5};
-        int[] numLetras = {3,3,3,4,5};
+        int[] numLetras = {3,4,5,6,7};
 
         for (int i = 0; i < guias.length; i++) {
             CtextViews = crearFilaTextViewsGood(guias[i], numLetras[i]);
@@ -93,11 +93,11 @@ public class MainActivity extends AppCompatActivity {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                muestraPalabra("pal", 0);
-                muestraPalabra("sol", 1);
-                muestraPalabra("bol", 2);
-                muestraPalabra("cola", 3);
-                muestraPalabra("chico", 4);
+                muestraPalabra("bol", 0);
+                muestraPalabra("cola", 1);
+                muestraPalabra("coche", 2);
+                muestraPalabra("camion", 3);
+                muestraPalabra("revista", 4);
             }
         });
     }
@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
         TextView[] textViews = new TextView[lletres];
 
         // Establecer un tamaño fijo para cada TextView
-        int width = 150; // Reemplaza FIXED_SIZE con el tamaño que quieres para tus TextViews
+        int width = 125; // Reemplaza FIXED_SIZE con el tamaño que quieres para tus TextViews
 
         // Crear un LinearLayout para contener los TextViews
         LinearLayout linearLayout = new LinearLayout(this);
@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Añadir TextView al LinearLayout
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, width);
-            params.setMargins(10, 10, 10, 10);
+            params.setMargins(5, 10, 5, 10);
             textView.setLayoutParams(params);
             linearLayout.addView(textView);
             textViews[i] = textView;
