@@ -8,6 +8,7 @@ import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -31,6 +32,10 @@ public class MainActivity extends AppCompatActivity {
             R.id.button5,R.id.button6,R.id.button7};
     private ConstraintLayout constraintLayout;
     private int heightDisplay, widthDisplay;
+
+    private TextView[] CtextViews;
+    private List<TextView[]> textViewsList = new ArrayList<>();
+
     private String [] pa = {"Pala, Palo, Pelo"};
 
     @Override
@@ -75,13 +80,26 @@ public class MainActivity extends AppCompatActivity {
         int[] numLetras = {3,3,3,4,5};
 
         for (int i = 0; i < guias.length; i++) {
-            TextView[] textViews = crearFilaTextViewsGood(guias[i], numLetras[i]);
-            for (TextView textView : textViews) {
+            CtextViews = crearFilaTextViewsGood(guias[i], numLetras[i]);
+            for (TextView textView : CtextViews) {
                 // Configuramos el color de fondo para cada TextView
-                textView.setText("");
                 textView.setBackgroundColor(Color.BLUE);
             }
+            textViewsList.add(CtextViews); // Agregar el array de TextViews a la lista
         }
+
+        // BOTON SEND
+        Button sendButton = findViewById(R.id.button10);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                muestraPalabra("pal", 0);
+                muestraPalabra("sol", 1);
+                muestraPalabra("bol", 2);
+                muestraPalabra("cola", 3);
+                muestraPalabra("chico", 4);
+            }
+        });
     }
 
     private void asignarLetrasABotones(String palabra) {
@@ -246,4 +264,36 @@ public class MainActivity extends AppCompatActivity {
         }
         return catalogo;
     }
+
+
+    private void muestraPalabra(String s, int posicion) {
+        // Obtener el array de TextViews correspondiente a la posición dada
+        TextView[] textViews = obtenerTextViewsPorPosicion(posicion);
+        Log.d("DEBUG", "Mostrando palabra: " + s + " en la posición: " + posicion);
+
+        // Verificar si la longitud de la palabra es menor o igual al número de TextViews disponibles
+        if (s.length() <= textViews.length) {
+            // Mostrar la palabra en los TextViews correspondientes
+            for (int i = 0; i < s.length(); i++) {
+                textViews[i].setTextColor(Color.WHITE);
+                textViews[i].setText(String.valueOf(s.charAt(i)));
+            }
+        } else {
+            // Si la longitud de la palabra es mayor que el número de TextViews disponibles, mostrar un mensaje de error
+            Log.e("Error", "La longitud de la palabra es mayor que el número de TextViews disponibles");
+        }
+    }
+
+    // Método auxiliar para obtener los TextViews correspondientes a una posición dada
+    private TextView[] obtenerTextViewsPorPosicion(int posicion) {
+        // Verificar si la posición es válida
+        if (posicion >= 0 && posicion < textViewsList.size()) {
+            return textViewsList.get(posicion);
+        } else {
+            // Si la posición no es válida, devolver un array vacío
+            Log.e("Error", "Posición no válida");
+            return new TextView[0];
+        }
+    }
+
 }
