@@ -23,8 +23,11 @@ import com.example.zenworld.R.id;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
     private TextView textViewPalabra;
@@ -38,7 +41,9 @@ public class MainActivity extends AppCompatActivity {
     private List<TextView[]> textViewsList = new ArrayList<>();
     int colorIndex = 0;
 
-    private String [] palabrasTemp = {"BOL","COLA","COCHE","CAMION","REVISTA"};
+    private String [] palabrasTemp = {"BOL","PALA","COCHE","MUSICA","REVISTA"};
+
+    private int randomIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +54,8 @@ public class MainActivity extends AppCompatActivity {
         constraintLayout = findViewById(R.id.constraintLayout);
 
         // ASIGNAR LETRAS A BOTONES
-        asignarLetrasABotones("REVISTA");
+        int randomIndexLP = new Random().nextInt(palabrasTemp.length);
+        asignarLetrasABotones(palabrasTemp[randomIndexLP]);
 
 
         // BOTÓN CLEAR
@@ -78,12 +84,18 @@ public class MainActivity extends AppCompatActivity {
         btnAyuda.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                randomIndex = new Random().nextInt(palabrasTemp.length);
+                String palabraAleatoria = palabrasTemp[randomIndex];
+
                 // Mostrar una palabra de la lista de palabras
+                mostraPrimeraLletra(palabraAleatoria, randomIndex);
+
+               /*
                 mostraPrimeraLletra("bol", 0);
                 mostraPrimeraLletra("cola", 1);
                 mostraPrimeraLletra("coche",2);
                 mostraPrimeraLletra("camion",3);
-                mostraPrimeraLletra("revista",4);
+                mostraPrimeraLletra("revista",4);*/
             }
         });
 
@@ -119,11 +131,16 @@ public class MainActivity extends AppCompatActivity {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                randomIndex = new Random().nextInt(palabrasTemp.length);
+                String palabraAleatoria = palabrasTemp[randomIndex];
+                muestraPalabra(palabraAleatoria, randomIndex);
+
+                /*
                 muestraPalabra("bol", 0);
                 muestraPalabra("cola", 1);
                 muestraPalabra("coche", 2);
                 muestraPalabra("camion", 3);
-                muestraPalabra("revista", 4);
+                muestraPalabra("revista", 4);*/
             }
         });
     }
@@ -328,7 +345,6 @@ public class MainActivity extends AppCompatActivity {
         // Verificar si la longitud de la palabra es menor o igual al número de TextViews disponibles
         if (s.length() <= textViews.length) {
             // Mostrar la palabra en los TextViews correspondientes
-
             textViews[0].setTextColor(Color.WHITE);
             textViews[0].setText(String.valueOf(s.charAt(0)));
 
@@ -393,4 +409,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    //--------------------------PRUEBAS------------------------
+
 }

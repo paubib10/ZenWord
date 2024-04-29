@@ -107,8 +107,8 @@
 
     <Button
         android:id="@+id/button3"
-        android:layout_width="58dp"
-        android:layout_height="50dp"
+        android:layout_width="65dp"
+        android:layout_height="56dp"
         android:background="#00FFFFFF"
         android:text="."
         android:textColorLink="#00FFFFFF"
