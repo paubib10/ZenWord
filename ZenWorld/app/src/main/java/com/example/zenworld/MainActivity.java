@@ -11,15 +11,16 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.zenworld.R.id;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +36,9 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView[] CtextViews;
     private List<TextView[]> textViewsList = new ArrayList<>();
+    int colorIndex = 0;
 
-    private String [] pa = {"Pala, Palo, Pelo"};
+    private String [] palabrasTemp = {"BOL","COLA","COCHE","CAMION","REVISTA"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
         // ASIGNAR LETRAS A BOTONES
         asignarLetrasABotones("REVISTA");
+
 
         // BOTÓN CLEAR
         Button btnClear = findViewById(R.id.button9);
@@ -67,6 +70,29 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 mostrarVentanaEmergeneteBonus();
+            }
+        });
+
+        // BOTÓN AYUDA
+        ImageButton btnAyuda = findViewById(id.imageButton4);
+        btnAyuda.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Mostrar una palabra de la lista de palabras
+                mostraPrimeraLletra("bol", 0);
+                mostraPrimeraLletra("cola", 1);
+                mostraPrimeraLletra("coche",2);
+                mostraPrimeraLletra("camion",3);
+                mostraPrimeraLletra("revista",4);
+            }
+        });
+
+        // BOTÓN REINCIAR
+        ImageButton btnReiniciar = findViewById(id.imageButton3);
+        btnReiniciar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                reiniciarJuego();
             }
         });
 
@@ -195,8 +221,8 @@ public class MainActivity extends AppCompatActivity {
         builder.setTitle("Encertades (0 de 10): \n");
 
         String message = "";
-        for(int i = 0; i < pa.length; i++) {
-            message = pa[i];
+        for(int i = 0; i < palabrasTemp.length; i++) {
+            message = palabrasTemp[i];
         }
 
         builder.setMessage(message);
@@ -269,7 +295,6 @@ public class MainActivity extends AppCompatActivity {
     private void muestraPalabra(String s, int posicion) {
         // Obtener el array de TextViews correspondiente a la posición dada
         TextView[] textViews = obtenerTextViewsPorPosicion(posicion);
-        Log.d("DEBUG", "Mostrando palabra: " + s + " en la posición: " + posicion);
 
         // Verificar si la longitud de la palabra es menor o igual al número de TextViews disponibles
         if (s.length() <= textViews.length) {
@@ -296,4 +321,76 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void mostraPrimeraLletra (String s, int posicio){
+        // Obtener el array de TextViews correspondiente a la posición dada
+        TextView[] textViews = obtenerTextViewsPorPosicion(posicio);
+
+        // Verificar si la longitud de la palabra es menor o igual al número de TextViews disponibles
+        if (s.length() <= textViews.length) {
+            // Mostrar la palabra en los TextViews correspondientes
+
+            textViews[0].setTextColor(Color.WHITE);
+            textViews[0].setText(String.valueOf(s.charAt(0)));
+
+        } else {
+            // Si la longitud de la palabra es mayor que el número de TextViews disponibles, mostrar un mensaje de error
+            Log.e("Error", "La longitud de la palabra es mayor que el número de TextViews disponibles");
+        }
+    }
+
+    private void reiniciarJuego() {
+        int[] colorCasilla = {Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.CYAN, Color.RED, Color.BLUE};
+        int[] circleResources = {R.drawable.green_circle, R.drawable.purple_circle, R.drawable.yellow_circle,
+                R.drawable.orange_circle, R.drawable.red_circle, R.drawable.blue_circle};
+
+        // Limpiar el TextView de la palabra
+        textViewPalabra.setText("");
+
+        // Habilitar los botones de letras y hacerlos visibles
+        for (int btnId : btnIdsLetra) {
+            Button button = findViewById(btnId);
+            button.setEnabled(true);
+            button.setVisibility(View.VISIBLE);
+            button.setTextColor(Color.WHITE);
+        }
+
+        // Desordenar las letras del círculo
+        randomCircle();
+
+        // Asignar letras a los botones
+        asignarLetrasABotones("CASTAÑA");
+
+        // Limpiar los TextViews de las palabras ocultas
+        for (TextView[] textViews : textViewsList) {
+            for (TextView textView : textViews) {
+                textView.setText("");
+                textView.setBackgroundColor(colorCasilla[colorIndex]);
+            }
+        }
+
+        ImageView imageViewCircle = findViewById(R.id.imageView);
+        imageViewCircle.setImageResource(circleResources[colorIndex]);
+
+        colorIndex = (colorIndex + 1) % colorCasilla.length;
+    }
+
+    private void enableViews(int parent) {
+        ViewGroup viewGroup = (ViewGroup) findViewById(parent);
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            View child = viewGroup.getChildAt(i);
+            if (child.getId() != R.id.imageButton2 && child.getId() != R.id.imageButton3) {
+                child.setEnabled(true);
+            }
+        }
+    }
+
+    private void disableViews(int parent) {
+        ViewGroup viewGroup = (ViewGroup) findViewById(parent);
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            View child = viewGroup.getChildAt(i);
+            if (child.getId() != R.id.imageButton2 && child.getId() != R.id.imageButton3) {
+                child.setEnabled(false);
+            }
+        }
+    }
 }
