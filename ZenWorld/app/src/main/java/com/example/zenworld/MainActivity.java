@@ -20,6 +20,10 @@ import android.widget.TextView;
 
 import com.example.zenworld.R.id;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,19 +34,17 @@ import java.util.Random;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
+    // Variables de instancia
     private TextView textViewPalabra;
     private List<Character> letrasCirculo = new ArrayList<>();
     private int[] btnIdsLetra = {R.id.button1,R.id.button2,R.id.button3,R.id.button4,
             R.id.button5,R.id.button6,R.id.button7};
     private ConstraintLayout constraintLayout;
     private int heightDisplay, widthDisplay;
-
     private TextView[] CtextViews;
     private List<TextView[]> textViewsList = new ArrayList<>();
-    int colorIndex = 0;
-
+    private int colorIndex = 0;
     private String [] palabrasTemp = {"BOL","PALA","COCHE","MUSICA","REVISTA"};
-
     private int randomIndex;
 
     @Override
@@ -50,6 +52,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        inicializarVariables();
+        leerArchivo();
+        configurarBotones();
+        configurarPalabrasOcultas();
+    }
+
+    private void inicializarVariables() {
         textViewPalabra = findViewById(R.id.textView1);
         constraintLayout = findViewById(R.id.constraintLayout);
 
@@ -57,8 +66,23 @@ public class MainActivity extends AppCompatActivity {
         int randomIndexLP = new Random().nextInt(palabrasTemp.length);
         asignarLetrasABotones(palabrasTemp[randomIndexLP]);
 
+        // PALABRAS OCULTAS CUADRADITOS
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        heightDisplay = displayMetrics.heightPixels;
+        widthDisplay = displayMetrics.widthPixels;
+    }
 
-        // BOTÓN CLEAR
+    private void configurarBotones() {
+        configurarBotonClear();
+        configurarRandom();
+        configurarBotonBonus();
+        configurarBotonAyuda();
+        configurarBotonReiniciar();
+        configurarBotonSend();
+    }
+
+    private void configurarBotonClear() {
         Button btnClear = findViewById(R.id.button9);
         btnClear.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,11 +90,29 @@ public class MainActivity extends AppCompatActivity {
                 clearPalabra(view);
             }
         });
+    }
 
-        // BOTÓN RANDOM
-        configurarRandom();
+    private void configurarRandom() {
+        ImageButton btnRandom = findViewById(R.id.imageButton1);
+        btnRandom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                randomCircle();
+            }
+        });
 
-        // BOTÓN BONUS
+        // Recorremos los botones de letras en el círculo
+        for(int i = 0; i < btnIdsLetra.length; i++) {
+            Button btn = findViewById(btnIdsLetra[i]); // get id
+            char letra = btn.getText().charAt(0); // get letter on circle
+            // Añadimos la letra en el circulo si no existe en la lista
+            if (!letrasCirculo.contains(letra)) {
+                letrasCirculo.add(letra);
+            }
+        }
+    }
+
+    private void configurarBotonBonus() {
         ImageButton btnBonus = findViewById(id.imageButton2);
         btnBonus.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -78,8 +120,9 @@ public class MainActivity extends AppCompatActivity {
                 mostrarVentanaEmergeneteBonus();
             }
         });
+    }
 
-        // BOTÓN AYUDA
+    private void configurarBotonAyuda() {
         ImageButton btnAyuda = findViewById(id.imageButton4);
         btnAyuda.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,17 +132,11 @@ public class MainActivity extends AppCompatActivity {
 
                 // Mostrar una palabra de la lista de palabras
                 mostraPrimeraLletra(palabraAleatoria, randomIndex);
-
-               /*
-                mostraPrimeraLletra("bol", 0);
-                mostraPrimeraLletra("cola", 1);
-                mostraPrimeraLletra("coche",2);
-                mostraPrimeraLletra("camion",3);
-                mostraPrimeraLletra("revista",4);*/
             }
         });
+    }
 
-        // BOTÓN REINCIAR
+    private void configurarBotonReiniciar() {
         ImageButton btnReiniciar = findViewById(id.imageButton3);
         btnReiniciar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,13 +144,21 @@ public class MainActivity extends AppCompatActivity {
                 reiniciarJuego();
             }
         });
+    }
 
-        // PALABRAS OCULTAS CUADRADITOS
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        heightDisplay = displayMetrics.heightPixels;
-        widthDisplay = displayMetrics.widthPixels;
+    private void configurarBotonSend() {
+        Button sendButton = findViewById(R.id.button10);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                randomIndex = new Random().nextInt(palabrasTemp.length);
+                String palabraAleatoria = palabrasTemp[randomIndex];
+                muestraPalabra(palabraAleatoria, randomIndex);
+            }
+        });
+    }
 
+    private void configurarPalabrasOcultas() {
         int[] guias = {R.id.guideline1, R.id.guideline2, R.id.guideline3, R.id.guideline4, R.id.guideline5};
         int[] numLetras = {3,4,5,6,7};
 
@@ -125,24 +170,6 @@ public class MainActivity extends AppCompatActivity {
             }
             textViewsList.add(CtextViews); // Agregar el array de TextViews a la lista
         }
-
-        // BOTON SEND
-        Button sendButton = findViewById(R.id.button10);
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                randomIndex = new Random().nextInt(palabrasTemp.length);
-                String palabraAleatoria = palabrasTemp[randomIndex];
-                muestraPalabra(palabraAleatoria, randomIndex);
-
-                /*
-                muestraPalabra("bol", 0);
-                muestraPalabra("cola", 1);
-                muestraPalabra("coche", 2);
-                muestraPalabra("camion", 3);
-                muestraPalabra("revista", 4);*/
-            }
-        });
     }
 
     private void asignarLetrasABotones(String palabra) {
@@ -186,7 +213,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void clearPalabra(View view) {
         textViewPalabra.setText("");
-
         for (int btnId : btnIdsLetra) {
             Button button = findViewById(btnId);
             button.setEnabled(true);
@@ -194,32 +220,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void configurarRandom() {
-        ImageButton btnRandom = findViewById(R.id.imageButton1);
-
-        // OnClickListener del botón RANDOM
-        btnRandom.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                randomCircle();
-            }
-        });
-
-        // Recorremos los botones de letras en el círculo
-        for(int i = 0; i < btnIdsLetra.length; i++) {
-            Button btn = findViewById(btnIdsLetra[i]); // get id
-            char letra = btn.getText().charAt(0); // get letter on circle
-            // Añadimos la letra en el circulo si no existe en la lista
-            if (!letrasCirculo.contains(letra)) {
-                letrasCirculo.add(letra);
-            }
-        }
-    }
-
-    /**
-     * Método que desordena las letras del círculo
-     * y las asigna a los botones de letras.
-     */
     private void randomCircle() {
         Collections.shuffle(letrasCirculo);
         for (int i = 0; i < btnIdsLetra.length; i++) {
@@ -228,10 +228,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Método que muestra una ventana emergente con las palabras
-     * y aciertos conseguidos.
-     */
     public void mostrarVentanaEmergeneteBonus() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -357,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
     private void reiniciarJuego() {
         int[] colorCasilla = {Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.CYAN, Color.RED, Color.BLUE};
         int[] circleResources = {R.drawable.green_circle, R.drawable.purple_circle, R.drawable.yellow_circle,
-                R.drawable.orange_circle, R.drawable.red_circle, R.drawable.blue_circle};
+                R.drawable.blue_circle, R.drawable.red_circle, R.drawable.orange_circle};
 
         // Limpiar el TextView de la palabra
         textViewPalabra.setText("");
@@ -407,6 +403,22 @@ public class MainActivity extends AppCompatActivity {
             if (child.getId() != R.id.imageButton2 && child.getId() != R.id.imageButton3) {
                 child.setEnabled(false);
             }
+        }
+    }
+
+    private void leerArchivo() {
+        try {
+            InputStream is = getResources().openRawResource(R.raw.paraules2);
+            BufferedReader r = new BufferedReader(new InputStreamReader(is));
+            String line;
+            while ((line = r.readLine()) != null) {
+                // Procesar la línea leída
+                System.out.println(line);
+            }
+            r.close();
+        } catch (IOException e) {
+            // Manejar la excepción
+            e.printStackTrace();
         }
     }
 
