@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -55,9 +56,9 @@ public class MainActivity extends AppCompatActivity {
 
     Map<String, String> catalogoPalabras = new HashMap<>();
     Map<Integer, Set<String>> catalogoLongitudes = new HashMap<>();
-    Map<Integer, Set<String>> catalogoSoluciones = new TreeMap<>();
+    Map<Integer, Set<String>> catalogoSoluciones = new HashMap<>();
     Map<Integer, String> catalogoPalabrasOcultas = new TreeMap<>();
-    Set<String> catalogoSolucionesEncontradas = new HashSet<>();
+    Map<String, Integer> catalogoSolucionesEncontradas = new HashMap<>();
     Map<Character, Integer> catalogoLetrasDisponibles = new HashMap<>();
     private String palabraIntroducida;
     private int bonus = 0;
@@ -202,11 +203,11 @@ public class MainActivity extends AppCompatActivity {
                     String value = entry.getValue();
 
                     if (esPalabraSolucio(value, palabraIntroducida.toLowerCase())) {
-                        catalogoSolucionesEncontradas.add(palabraIntroducida);
-                        System.out.println("La palabra " + palabraIntroducida + " es solución de " + value);
+                        catalogoSolucionesEncontradas.put(palabraIntroducida, Color.BLACK);
+                        mostraMissatge("Has descobert una paraula amagada", false);
                         muestraPalabra(palabraIntroducida, key);
 
-                        // Eliminar la palabra del cataloho de palabras ocultas
+                        // Eliminar la palabra del catalogo de palabras ocultas
                         catalogoPalabrasOcultas.remove(key);
                         esSolucion = true;
                         break;
@@ -215,10 +216,25 @@ public class MainActivity extends AppCompatActivity {
 
                 // Si la palabra introducida no es una de las palabras ocultas pero es una solución posible
                 if(!esSolucion && catalogoPalabras.containsValue(palabraIntroducida.toLowerCase())){
-                    catalogoSolucionesEncontradas.add(palabraIntroducida);
-                    mostraMissatge("Paraula vàlida! Tens un bonus", false);
+                    // Verificar si la palabra ya ha sido introducida
+                    if (!catalogoSolucionesEncontradas.containsKey(palabraIntroducida)) {
+                        catalogoSolucionesEncontradas.put(palabraIntroducida, Color.BLACK);
+                        mostraMissatge("Paraula vàlida! Tens un bonus", false);
 
-                    bonus++;
+                        bonus++;
+                    } else { // La palabra ya ha sido introducida
+                        mostraMissatge("Aquesta ja la tens", false);
+                        // Cambiamos el color de la palabra repetida a rojo
+                        catalogoSolucionesEncontradas.put(palabraIntroducida, Color.RED);
+                    }
+                } else if (!esSolucion) {
+                    mostraMissatge("Paraula no vàlida!", false);
+                }
+
+                // Ya se han encontrado todas las palabras, catalagoPalabrasOcultas está vacío
+                if (catalogoPalabrasOcultas.isEmpty()) {
+                    mostraMissatge("Has guanyat! Enhorabona", false);
+                    disableViews(constraintLayout.getId());
                 }
 
                 textViewPalabra.setText("");
@@ -240,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
                     // Seleccionar una palabra oculta no completada de forma aleatoria
                     List<Integer> indicesNoCompletados = new ArrayList<>();
                     for (Map.Entry<Integer, String> entry : catalogoPalabrasOcultas.entrySet()) {
-                        if (!catalogoSolucionesEncontradas.contains(entry.getValue())) {
+                        if (!catalogoSolucionesEncontradas.containsKey(entry.getValue())) {
                             indicesNoCompletados.add(entry.getKey());
                         }
                     }
@@ -345,12 +361,20 @@ public class MainActivity extends AppCompatActivity {
 
         builder.setTitle("Encertades (0 de 10): \n");
 
-        String message = "";
-        for(int i = 0; i < palabrasTemp.length; i++) {
-            message = palabrasTemp[i];
+        StringBuilder message = new StringBuilder();
+        for(Map.Entry<String, Integer> entry : catalogoSolucionesEncontradas.entrySet()) {
+            String palabra = entry.getKey();
+            int color = entry.getValue();
+
+            // Si el color es rojo, añadir la palabra en rojo al mensaje
+            if(color == Color.RED) {
+                message.append("<font color='#FF0000'>").append(palabra).append("</font><br>");
+            } else {
+                message.append(palabra).append("<br>");
+            }
         }
 
-        builder.setMessage(message);
+        builder.setMessage(Html.fromHtml(message.toString()));
         builder.setPositiveButton("OK", null);
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -400,13 +424,15 @@ public class MainActivity extends AppCompatActivity {
     public static boolean esPalabraSolucio(String palabra1, String palabra2) {
         Map<Character, Integer> letrasDisponibles = construirCatalogo(palabra1);
 
-        // Verificar si podemos construir la palabra2 utilizando las letras disponibles
+        // Recorrer las letras de la palabra2
         for (char letra : palabra2.toCharArray()) {
+            // Verificar si la letra está disponible en la palabra1
             if (!letrasDisponibles.containsKey(letra) || letrasDisponibles.get(letra) == 0) {
                 return false; // La letra no está disponible en la palabra1 o se ha agotado
             }
             letrasDisponibles.put(letra, letrasDisponibles.get(letra) - 1);
         }
+        // Verificamos que las palabras sean iguales (letras en la misma posición)
         return palabra1.equals(palabra2);
     }
 
@@ -448,22 +474,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void mostraPrimeraLletra2(String s, int posicio){
-        // Obtener el array de TextViews correspondiente a la posición dada
-        TextView[] textViews = obtenerTextViewsPorPosicion(posicio);
-
-        // Verificar si la longitud de la palabra es menor o igual al número de TextViews disponibles
-        if (s.length() <= textViews.length) {
-            // Mostrar la palabra en los TextViews correspondientes
-            textViews[0].setTextColor(Color.WHITE);
-            textViews[0].setText(String.valueOf(s.charAt(0)));
-
-        } else {
-            // Si la longitud de la palabra es mayor que el número de TextViews disponibles, mostrar un mensaje de error
-            Log.e("Error", "La longitud de la palabra es mayor que el número de TextViews disponibles");
-        }
-    }
-
     private void mostraPrimeraLletra(String s, int posicio){
         // Obtener el array de TextViews correspondiente a la posición dada
         TextView[] textViews = obtenerTextViewsPorPosicion(posicio);
@@ -492,6 +502,52 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void reiniciarJuego() {
+        int[] colorCasilla = {Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.CYAN, Color.RED, Color.BLUE};
+        int[] circleResources = {R.drawable.green_circle, R.drawable.purple_circle, R.drawable.yellow_circle,
+                R.drawable.blue_circle, R.drawable.red_circle, R.drawable.orange_circle};
+
+        // Limpiar el TextView de la palabra
+        textViewPalabra.setText("");
+
+        // Habilitar los botones de letras y hacerlos visibles
+        for (int btnId : btnIdsLetra) {
+            Button button = findViewById(btnId);
+            button.setEnabled(true);
+            button.setVisibility(View.VISIBLE);
+            button.setTextColor(Color.WHITE);
+        }
+
+        // Limpiar los TextViews de las palabras ocultas
+        for (TextView[] textViews : textViewsList) {
+            for (TextView textView : textViews) {
+                textView.setText("");
+                textView.setBackgroundColor(Color.BLUE); // Restablecer el color de fondo a azul
+                textView.setBackgroundColor(colorCasilla[colorIndex]);
+            }
+        }
+
+        ImageView imageViewCircle = findViewById(R.id.imageView);
+        imageViewCircle.setImageResource(circleResources[colorIndex]);
+
+        colorIndex = (colorIndex + 1) % colorCasilla.length;
+
+        // Limpiar los catálogos
+        catalogoPalabras.clear();
+        catalogoLongitudes.clear();
+        catalogoSoluciones.clear();
+        catalogoPalabrasOcultas.clear();
+        catalogoSolucionesEncontradas.clear();
+        catalogoLetrasDisponibles.clear();
+
+        // Restablecer la variable bonus a 0
+        bonus = 0;
+
+        // Restablecer el estado del juego
+        inicializarVariables();
+        configurarPalabrasOcultas();
+    }
+
+    private void reiniciarJuego2() {
         int[] colorCasilla = {Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.CYAN, Color.RED, Color.BLUE};
         int[] circleResources = {R.drawable.green_circle, R.drawable.purple_circle, R.drawable.yellow_circle,
                 R.drawable.blue_circle, R.drawable.red_circle, R.drawable.orange_circle};
