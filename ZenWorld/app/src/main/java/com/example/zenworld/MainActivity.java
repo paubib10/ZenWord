@@ -94,11 +94,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (catalogoSoluciones.isEmpty()) {
             System.out.println("El catálogo de soluciones está vacío.");
-            String CHACHI = obtenerPalabraAleatoria();
-            System.out.println("Palabra aleatoria: " + CHACHI);
-            obtenerCatalogoSoluciones(CHACHI);
-            seleccionarPalabrasOcultas(CHACHI);
-            asignarLetrasABotones(CHACHI.toUpperCase());
             return;
         } else {
             for (Map.Entry<Integer, Set<String>> entry : catalogoSoluciones.entrySet()) {
@@ -664,7 +659,7 @@ public class MainActivity extends AppCompatActivity {
         Collections.max(catalogoLongitudes.keySet());
 
         // Generar un número aleatorio entre 3 y el máximo número de letras
-        int longitudAleatoria = new Random().nextInt(1) + 6; //preguntar si debe ser entre 3 y 7 o como esta
+        int longitudAleatoria = new Random().nextInt(3) + 4; //preguntar si debe ser entre 3 y 7 o como esta
         System.out.println("Longitud aleatorio de letraS "+ longitudAleatoria);
 
         // Obtener el conjunto de palabras de la longitud aleatoria
@@ -673,7 +668,7 @@ public class MainActivity extends AppCompatActivity {
         // Si no hay palabras de esa longitud, regresar null
         while (palabrasLongitudAleatoria == null || palabrasLongitudAleatoria.isEmpty()) {
             System.out.println("No se ha encontrado palabras con esta longitud, seguimos buscando ...");
-            longitudAleatoria = new Random().nextInt(1) + 6; //peguntar si debe ser entre 3 y 7 o como esta
+            longitudAleatoria = new Random().nextInt(3) + 4; //peguntar si debe ser entre 3 y 7 o como esta
             System.out.println("Longitud aleatorio de letra "+ longitudAleatoria);
 
             // Obtener el conjunto de palabras de la longitud aleatoria
@@ -684,7 +679,13 @@ public class MainActivity extends AppCompatActivity {
         List<String> listaPalabrasLongitudAleatoria = new ArrayList<>(palabrasLongitudAleatoria);
         // Elegir una palabra aleatoria de ese conjunto
         String palabraAleatoria = listaPalabrasLongitudAleatoria.get(new Random().nextInt(listaPalabrasLongitudAleatoria.size()));
-        catalogoPalabrasOcultas.put(4, palabraAleatoria);
+
+        // Agregar la palabra aleatoria al catálogo de soluciones
+        if (!catalogoSoluciones.containsKey(palabraAleatoria.length())) {
+            catalogoSoluciones.put(palabraAleatoria.length(), new TreeSet<>());
+        }
+        catalogoSoluciones.get(palabraAleatoria.length()).add(palabraAleatoria);
+
         return palabraAleatoria;
     }
 
@@ -700,7 +701,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             }
             Set<String> palabrasLongitud = catalogoLongitudes.get(longitud - i);
-            while (palabrasLongitud == null || palabrasLongitud.isEmpty()) {
+            while ((palabrasLongitud == null || palabrasLongitud.isEmpty() || palabrasLongitud.size() < 5) && (longitud - i) > 3) {
                 palabrasLongitud = catalogoLongitudes.get(longitud - i);
             }
             for (String palabra : palabrasLongitud) {
@@ -726,41 +727,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void seleccionarPalabrasOcultas(String palabraAleataroria) {
-        int j = 1;
         int longitud = palabraAleataroria.length();
-        for (int k = 0; k < 5; k++) {
-            Set<String> palabrasSoluciones = catalogoSoluciones.get(longitud - j);
-            while ((palabrasSoluciones == null || palabrasSoluciones.isEmpty() || palabrasSoluciones.size() < 5) && (longitud - j) > 3) {
-                palabrasSoluciones = catalogoSoluciones.get(longitud - j);
-                j++;
+        Set<String> todasLasSoluciones = new HashSet<>();
+
+        // Agregar todas las soluciones posibles al conjunto todasLasSoluciones
+        for (int i = 1; i < 5; i++) {
+            if(longitud - i < 3){
+                break;
             }
-            if (palabrasSoluciones != null && !palabrasSoluciones.isEmpty() && palabrasSoluciones.size() >= 5) {
-                List<String> listaSoluciones = new ArrayList<>(palabrasSoluciones);
-                String solucionAleatoria = listaSoluciones.get(new Random().nextInt(listaSoluciones.size()));
-                while (catalogoPalabrasOcultas.containsValue(solucionAleatoria)) {
-                    solucionAleatoria = listaSoluciones.get(new Random().nextInt(listaSoluciones.size()));
-                }
-                catalogoPalabrasOcultas.put(k, solucionAleatoria);
+            Set<String> palabrasSoluciones = catalogoSoluciones.get(longitud - i);
+            if (palabrasSoluciones != null && !palabrasSoluciones.isEmpty()) {
+                todasLasSoluciones.addAll(palabrasSoluciones);
             }
-            j++;
         }
 
-        for (int k = 0; k < 5; k++) {
-            if (!catalogoPalabrasOcultas.containsKey(k)) {
-                for (Set<String> palabrasSoluciones : catalogoSoluciones.values()) {
-                    if (!palabrasSoluciones.isEmpty()) {
-                        List<String> listaSoluciones = new ArrayList<>(palabrasSoluciones);
-                        String solucionAleatoria = listaSoluciones.get(new Random().nextInt(listaSoluciones.size()));
-                        while (catalogoPalabrasOcultas.containsValue(solucionAleatoria)) {
-                            solucionAleatoria = listaSoluciones.get(new Random().nextInt(listaSoluciones.size()));
-                            break;
-                        }
-                        catalogoPalabrasOcultas.put(k, solucionAleatoria);
-                        break;
-                    }
-                }
+        // Convertir el conjunto todasLasSoluciones a una lista para poder seleccionar palabras de manera aleatoria
+        List<String> listaTodasLasSoluciones = new ArrayList<>(todasLasSoluciones);
+
+        // Seleccionar aleatoriamente hasta 4 soluciones de listaTodasLasSoluciones
+        Random rand = new Random();
+        int contadorSoluciones = 0;
+        while (contadorSoluciones < 4 && !listaTodasLasSoluciones.isEmpty()) {
+            int indiceAleatorio = rand.nextInt(listaTodasLasSoluciones.size());
+            String solucionAleatoria = listaTodasLasSoluciones.get(indiceAleatorio);
+
+            // Verificar si la solución ya está en el catálogo de palabras ocultas o es la palabra aleatoria
+            if (!catalogoPalabrasOcultas.containsValue(solucionAleatoria) && !solucionAleatoria.equals(palabraAleataroria)) {
+                listaTodasLasSoluciones.remove(indiceAleatorio); // Eliminar la solución seleccionada de listaTodasLasSoluciones
+                catalogoPalabrasOcultas.put(contadorSoluciones, solucionAleatoria);
+                contadorSoluciones++;
+            } else {
+                // Si la solución ya está en el catálogo de palabras ocultas o es la palabra aleatoria, eliminarla de listaTodasLasSoluciones y no agregarla al catálogo
+                listaTodasLasSoluciones.remove(indiceAleatorio);
             }
         }
+
+        // Añadir la palabra aleatoria en la última posición del catálogo de palabras ocultas
+        catalogoPalabrasOcultas.put(contadorSoluciones, palabraAleataroria);
+
         sortCatalogoPalabrasOcultas();
     }
 
