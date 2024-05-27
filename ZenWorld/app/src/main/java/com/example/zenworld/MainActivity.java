@@ -28,12 +28,13 @@ import com.example.zenworld.R.id;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -96,7 +97,8 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("El catálogo de soluciones está vacío.");
             return;
         } else {
-            for (Map.Entry<Integer, Set<String>> entry : catalogoSoluciones.entrySet()) {
+            for (Iterator<Map.Entry<Integer, Set<String>>> iterator = catalogoSoluciones.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<Integer, Set<String>> entry = iterator.next();
                 int longitud = entry.getKey();
                 Set<String> soluciones = entry.getValue();
 
@@ -115,14 +117,7 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("El catálogo de palabras ocultas está vacío.");
             return;
         } else {
-            for (Map.Entry<Integer, String> entry : catalogoPalabrasOcultas.entrySet()) {
-                int longitud = entry.getKey();
-                String soluciones = entry.getValue();
-
-                System.out.println("Solucion: " + longitud + ":");
-                System.out.println(soluciones);
-                System.out.println("------");
-            }
+            System.out.println(catalogoPalabrasOcultas);
         }
         palabraIntroducida = " ";
         // PALABRAS OCULTAS CUADRADITOS
@@ -238,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 // Si la palabra introducida no es una de las palabras ocultas pero es una solución posible
-                if(!esSolucion && catalogoPalabras.containsValue(palabraIntroducida.toLowerCase())){
+                if(!esSolucion && catalogoPalabras.containsValue(convertirSinAcentos(palabraIntroducida).toLowerCase())){
                     // Verificar si la palabra ya ha sido introducida
                     if (!catalogoSolucionesEncontradas.containsKey(palabraIntroducida)) {
                         catalogoSolucionesEncontradas.put(palabraIntroducida, Color.BLACK);
@@ -283,6 +278,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private static String convertirSinAcentos(String input) {
+        // Convertir la cadena a minúsculas y eliminar los acentos
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        normalized = normalized.replaceAll("[^\\p{ASCII}]", "");
+        return normalized.toLowerCase();
+    }
+
     private void configurarBotonBonus() {
         ImageButton btnBonus = findViewById(id.imageButton2);
         btnBonus.setOnClickListener(new View.OnClickListener() {
@@ -305,9 +307,9 @@ public class MainActivity extends AppCompatActivity {
 
                     GradientDrawable gradientDrawable = new GradientDrawable();
                     gradientDrawable.setShape(GradientDrawable.RECTANGLE);
-                    gradientDrawable.setCornerRadius(10); // Ajusta el radio de las esquinas redondeadas
-                    gradientDrawable.setStroke(2, Color.TRANSPARENT); // Ajusta el color y el ancho del borde
-                    gradientDrawable.setColor(Color.CYAN); // Ajusta el color de fondo
+                    gradientDrawable.setCornerRadius(10);
+                    gradientDrawable.setStroke(2, Color.TRANSPARENT);
+                    gradientDrawable.setColor(Color.CYAN);
 
                     // Establecer el GradientDrawable como fondo del TextView
                     textView.setBackground(gradientDrawable);
@@ -386,7 +388,8 @@ public class MainActivity extends AppCompatActivity {
         builder.setTitle("Encertades (" + paraulesEncertades + " de " + paraulesPosiblesSolucions +"): \n");
 
         StringBuilder message = new StringBuilder();
-        for(Map.Entry<String, Integer> entry : catalogoSolucionesEncontradas.entrySet()) {
+        for (Iterator<Map.Entry<String, Integer>> it = catalogoSolucionesEncontradas.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<String, Integer> entry = it.next();
             String palabra = entry.getKey();
             int color = entry.getValue();
 
@@ -468,7 +471,6 @@ public class MainActivity extends AppCompatActivity {
         return catalogo;
     }
 
-
     private void muestraPalabra(String s, int posicion) {
         // Obtener el array de TextViews correspondiente a la posición dada
         TextView[] textViews = obtenerTextViewsPorPosicion(posicion);
@@ -534,7 +536,8 @@ public class MainActivity extends AppCompatActivity {
         enableViews(constraintLayout.getId());
 
         // Eliminar todos los TextViews existentes
-        for (TextView[] textViews : textViewsList) {
+        for (Iterator<TextView[]> it = textViewsList.iterator(); it.hasNext(); ) {
+            TextView[] textViews = it.next();
             for (TextView textView : textViews) {
                 ((ViewGroup) textView.getParent()).removeView(textView); // Eliminar el TextView del layout
             }
@@ -621,8 +624,6 @@ public class MainActivity extends AppCompatActivity {
             BufferedReader r = new BufferedReader(new InputStreamReader(is));
             String line;
             while((line = r.readLine()) != null) {
-                //System.out.println(line);
-                //catalogoPalabras.put(line, line);
                 agregarPalabra(line);
             }
 
@@ -640,7 +641,6 @@ public class MainActivity extends AppCompatActivity {
 
             // Agregar la palabra con acentos y su versión sin acentos al catálogo
             catalogoPalabras.put(palabraConAcentos, palabraSinAcentos);
-            //System.out.println(catalogoPalabras.get(palabra));
 
             // Agregar la palabra al catálogo de palabras por longitud
             int longitud = palabraConAcentos.length();
@@ -704,7 +704,8 @@ public class MainActivity extends AppCompatActivity {
             while ((palabrasLongitud == null || palabrasLongitud.isEmpty() || palabrasLongitud.size() < 5) && (longitud - i) > 3) {
                 palabrasLongitud = catalogoLongitudes.get(longitud - i);
             }
-            for (String palabra : palabrasLongitud) {
+            for (Iterator<String> it = palabrasLongitud.iterator(); it.hasNext(); ) {
+                String palabra = it.next();
                 // Crear una copia de las letras únicas de la palabra aleatoria y sus recuentos
                 Map<Character, Integer> letrasRestantes = new HashMap<>(letrasPalabraAleatoria);
                 boolean contieneTodasLasLetras = true;
