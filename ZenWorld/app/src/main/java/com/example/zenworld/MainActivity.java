@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     // Variables de instancia
     private TextView textViewPalabra;
     private TextView textViewInformacion;
+    private TextView textViewBonus;
     private List<Character> letrasCirculo = new ArrayList<>();
     private int[] btnIdsLetra = {R.id.button1,R.id.button2,R.id.button3,R.id.button4,
             R.id.button5,R.id.button6,R.id.button7};
@@ -80,8 +81,10 @@ public class MainActivity extends AppCompatActivity {
         textViewPalabra = findViewById(R.id.textView1);
         constraintLayout = findViewById(R.id.constraintLayout);
         textViewInformacion = findViewById(R.id.textView2);
+        textViewBonus = findViewById(R.id.textView3);
         paraulesEncertades = 0;
         paraulesPosiblesSolucions = 1;
+        bonus = 0;
 
         // ASIGNAR LETRAS A BOTONES
         String palabraAleatoria = obtenerPalabraAleatoria();
@@ -89,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
         obtenerCatalogoSoluciones(palabraAleatoria);
         seleccionarPalabrasOcultas(palabraAleatoria);
         asignarLetrasABotones(palabraAleatoria.toUpperCase());
+
+        // Actualizar el texto del textViewBonus
+        textViewBonus.setText(String.valueOf(bonus));
 
         // ASIGNAR TEXTO INFORMATIVO
         textViewInformacion.setText("Encertades (" + paraulesEncertades + " de " + paraulesPosiblesSolucions +"): \n");
@@ -120,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(catalogoPalabrasOcultas);
         }
         palabraIntroducida = " ";
+
         // PALABRAS OCULTAS CUADRADITOS
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -189,6 +196,9 @@ public class MainActivity extends AppCompatActivity {
 
                         // Restar 5 bonus
                         bonus -= 2;
+
+                        // Actualizar el texto del textViewBonus
+                        textViewBonus.setText(String.valueOf(bonus));
                     } else {
                         // No hay palabras ocultas para mostrar la primera letra
                     }
@@ -241,6 +251,8 @@ public class MainActivity extends AppCompatActivity {
                         paraulesEncertades++;
 
                         bonus++;
+
+                        textViewBonus.setText(String.valueOf(bonus));
                     } else { // La palabra ya ha sido introducida
                         mostraMissatge("Aquesta ja la tens", false);
                         // Cambiamos el color de la palabra repetida a rojo
