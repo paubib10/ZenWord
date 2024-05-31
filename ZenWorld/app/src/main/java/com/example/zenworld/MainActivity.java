@@ -108,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
         // Configuración de la partida, se elije la palabra que se pondra en el circulo,
         // se añaden las posibles soluciones al catalogoSoluciones y se seleccionan las palabras ocultas
         String palabraAleatoria = obtenerPalabraAleatoria();
-        System.out.println("Palabra aleatoria: " + palabraAleatoria);
         esSolucio(palabraAleatoria, catalogoPalabras.values().iterator()); // Añadir posibles soluciones al catalogoSoluciones
         seleccionarPalabrasOcultas(palabraAleatoria);
         // Se asignan las letras a los botones del circulo
@@ -901,7 +900,6 @@ public class MainActivity extends AppCompatActivity {
                 catalogoSoluciones.get(entry.getValue().length()).add(entry.getValue());
             }
         }
-        System.out.println("Palabra aleatoriaA: " + palabraAleatoria);
         return palabraAleatoria;
     }
 
