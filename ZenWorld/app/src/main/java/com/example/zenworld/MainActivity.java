@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,6 +42,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+// Blanca Atiénzar Martínez
+// Pau Toni Bibiloni Martínez
+// Hai Zi Bibiloni Trobat
+
+/**
+ * Usamos el hash en vez de estructuras de datos no ordenadas porque es más eficiente. Las tablas hash permiten tiempos
+ * de acceso, inserción y eliminación constantes (O(1)), mientras que las estructuras no ordenadas requieren recorrer
+ * todos los elementos (O(n)). Esto hace que el hash sea ideal para un acceso rápido y frecuente a los datos.
+ */
 
 public class MainActivity extends AppCompatActivity {
     // Variables de instancia
@@ -60,13 +71,17 @@ public class MainActivity extends AppCompatActivity {
     Map<Integer, Set<String>> catalogoSoluciones = new HashMap<>();
     Map<Integer, String> catalogoPalabrasOcultas = new TreeMap<>();
     Map<String, Integer> catalogoSolucionesEncontradas = new HashMap<>();
-    Map<Character, Integer> catalogoLetrasDisponibles = new HashMap<>();
     private String palabraIntroducida;
     private int bonus = 0;
     private int paraulesEncertades = 0;
-    private int paraulesPosiblesSolucions = 1;
+    private int paraulesPosiblesSolucions = 0;
+    private int contadorLetras = 0;
 
     @Override
+    /**
+     * Método onCreate que se ejecuta al iniciar la actividad.
+     * @param savedInstanceState El estado de la instancia guardada.
+     */
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -77,20 +92,26 @@ public class MainActivity extends AppCompatActivity {
         configurarPalabrasOcultas();
     }
 
+    /**
+     * Método para inicializar las variables del juego.
+     */
     private void inicializarVariables() {
+        // Se asigna cada variable con el elemento correspondiente del juego
         textViewPalabra = findViewById(R.id.textView1);
         constraintLayout = findViewById(R.id.constraintLayout);
         textViewInformacion = findViewById(R.id.textView2);
         textViewBonus = findViewById(R.id.textView3);
         paraulesEncertades = 0;
-        paraulesPosiblesSolucions = 1;
+        paraulesPosiblesSolucions = 0;
         bonus = 0;
 
-        // ASIGNAR LETRAS A BOTONES
+        // Configuración de la partida, se elije la palabra que se pondra en el circulo,
+        // se añaden las posibles soluciones al catalogoSoluciones y se seleccionan las palabras ocultas
         String palabraAleatoria = obtenerPalabraAleatoria();
         System.out.println("Palabra aleatoria: " + palabraAleatoria);
-        obtenerCatalogoSoluciones(palabraAleatoria);
+        esSolucio(palabraAleatoria, catalogoPalabras.values().iterator()); // Añadir posibles soluciones al catalogoSoluciones
         seleccionarPalabrasOcultas(palabraAleatoria);
+        // Se asignan las letras a los botones del circulo
         asignarLetrasABotones(palabraAleatoria.toUpperCase());
 
         // Actualizar el texto del textViewBonus
@@ -99,26 +120,15 @@ public class MainActivity extends AppCompatActivity {
         // ASIGNAR TEXTO INFORMATIVO
         textViewInformacion.setText("Encertades (" + paraulesEncertades + " de " + paraulesPosiblesSolucions +"): \n");
 
+        // Mostrar el catálogo de soluciones y palabras ocultas
         if (catalogoSoluciones.isEmpty()) {
             System.out.println("El catálogo de soluciones está vacío.");
             return;
         } else {
-            for (Iterator<Map.Entry<Integer, Set<String>>> iterator = catalogoSoluciones.entrySet().iterator(); iterator.hasNext(); ) {
-                Map.Entry<Integer, Set<String>> entry = iterator.next();
-                int longitud = entry.getKey();
-                Set<String> soluciones = entry.getValue();
-
-                System.out.println("Longitud: " + longitud);
-                System.out.println("Soluciones:");
-
-                for (String solucion : soluciones) {
-                    System.out.println(solucion);
-                }
-
-                System.out.println("------");
-            }
+            // Success
         }
 
+        // Mostrar el catálogo de palabras ocultas
         if (catalogoPalabrasOcultas.isEmpty()) {
             System.out.println("El catálogo de palabras ocultas está vacío.");
             return;
@@ -127,13 +137,16 @@ public class MainActivity extends AppCompatActivity {
         }
         palabraIntroducida = " ";
 
-        // PALABRAS OCULTAS CUADRADITOS
+        // Configurar el tamaño de la pantalla
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         heightDisplay = displayMetrics.heightPixels;
         widthDisplay = displayMetrics.widthPixels;
     }
 
+    /**
+     * Método para configurar los botones de la interfaz de usuario.
+     */
     private void configurarBotones() {
         configurarBotonClear();
         configurarRandom();
@@ -143,6 +156,9 @@ public class MainActivity extends AppCompatActivity {
         configurarBotonSend();
     }
 
+    /**
+     * Configura el botón de limpiar para borrar el contenido del TextView que muestra la palabra.
+     */
     private void configurarBotonClear() {
         Button btnClear = findViewById(R.id.button9);
         btnClear.setOnClickListener(new View.OnClickListener() {
@@ -153,6 +169,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Configura el botón de letras aleatorias para mezclar las letras en el círculo.
+     */
     private void configurarRandom() {
         ImageButton btnRandom = findViewById(R.id.imageButton1);
         btnRandom.setOnClickListener(new View.OnClickListener() {
@@ -173,12 +192,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Configura el botón de ayuda para mostrar la primera letra de una palabra oculta.
+     */
     private void configurarBotonAyuda() {
         ImageButton btnAyuda = findViewById(id.imageButton4);
         btnAyuda.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (bonus >= 2) {
+                if (bonus >= 5) { // Verificar si hay suficientes bonus
                     // Seleccionar una palabra oculta no completada de forma aleatoria
                     List<Integer> indicesNoCompletados = new ArrayList<>();
                     for (Map.Entry<Integer, String> entry : catalogoPalabrasOcultas.entrySet()) {
@@ -195,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
                         mostraPrimeraLletra(palabraAleatoria.toUpperCase(), indiceAleatorioNoCompletado);
 
                         // Restar 5 bonus
-                        bonus -= 2;
+                        bonus -= 5;
 
                         // Actualizar el texto del textViewBonus
                         textViewBonus.setText(String.valueOf(bonus));
@@ -207,6 +229,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Configura el botón de reiniciar para reiniciar la partida.
+     */
     private void configurarBotonReiniciar() {
         ImageButton btnReiniciar = findViewById(id.imageButton3);
         btnReiniciar.setOnClickListener(new View.OnClickListener() {
@@ -217,33 +242,40 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Configura el botón de enviar para verificar si la palabra introducida por el usuario es una solución.
+     */
     private void configurarBotonSend() {
         Button sendButton = findViewById(R.id.button10);
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Obtener la palabra introducida por el usuario
                 palabraIntroducida = textViewPalabra.getText().toString();
 
                 boolean esSolucion = false;
-                for (Map.Entry<Integer, String> entry : catalogoPalabrasOcultas.entrySet()) {
+                Iterator<Map.Entry<Integer, String>> iterator = catalogoPalabrasOcultas.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<Integer, String> entry = iterator.next();
                     Integer key = entry.getKey();
                     String value = entry.getValue();
 
-                    if (esPalabraSolucio(value, palabraIntroducida.toLowerCase())) {
+                    // Verificar si la palabra introducida es una de las palabras ocultas
+                    if (verificadorPalabra(value, palabraIntroducida.toLowerCase())) {
                         catalogoSolucionesEncontradas.put(palabraIntroducida, Color.BLACK);
                         mostraMissatge("Has descobert una paraula amagada", false);
                         muestraPalabra(palabraIntroducida, key);
                         paraulesEncertades++;
 
                         // Eliminar la palabra del catalogo de palabras ocultas
-                        catalogoPalabrasOcultas.remove(key);
+                        iterator.remove();
                         esSolucion = true;
                         break;
                     }
                 }
 
                 // Si la palabra introducida no es una de las palabras ocultas pero es una solución posible
-                if(!esSolucion && catalogoPalabras.containsValue(convertirSinAcentos(palabraIntroducida).toLowerCase())){
+                if(!esSolucion && catalogoPalabras.containsValue(palabraIntroducida.toLowerCase())){
                     // Verificar si la palabra ya ha sido introducida
                     if (!catalogoSolucionesEncontradas.containsKey(palabraIntroducida)) {
                         catalogoSolucionesEncontradas.put(palabraIntroducida, Color.BLACK);
@@ -262,10 +294,12 @@ public class MainActivity extends AppCompatActivity {
                     mostraMissatge("Paraula no vàlida!", false);
                 }
 
-                // ASIGNAR MENU INFORMATIVO
+                // Actualizar el texto del textViewInformacion
                 textViewInformacion.setText("Encertades (" + paraulesEncertades + " de " + paraulesPosiblesSolucions +"): ");
                 StringBuilder message = new StringBuilder();
-                for(Map.Entry<String, Integer> entry : catalogoSolucionesEncontradas.entrySet()) {
+                Iterator<Map.Entry<String, Integer>> iterator1 = catalogoSolucionesEncontradas.entrySet().iterator();
+                while (iterator1.hasNext()) {
+                    Map.Entry<String, Integer> entry = iterator1.next();
                     String palabra = entry.getKey();
                     int color = entry.getValue();
 
@@ -281,6 +315,7 @@ public class MainActivity extends AppCompatActivity {
 
                 textViewInformacion.append(Html.fromHtml(message.toString()));
                 textViewPalabra.setText("");
+                // Restablecer los botones de letras
                 for (int btnId : btnIdsLetra) {
                     Button button = findViewById(btnId);
                     button.setEnabled(true);
@@ -290,13 +325,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private static String convertirSinAcentos(String input) {
-        // Convertir la cadena a minúsculas y eliminar los acentos
-        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
-        normalized = normalized.replaceAll("[^\\p{ASCII}]", "");
-        return normalized.toLowerCase();
-    }
-
+    /**
+     * Configura el botón de bonus para mostrar una ventana emergente con un resumen de las palabras acertadas.
+     */
     private void configurarBotonBonus() {
         ImageButton btnBonus = findViewById(id.imageButton2);
         btnBonus.setOnClickListener(new View.OnClickListener() {
@@ -307,14 +338,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Configura las palabras ocultas en el juego
+     */
     private void configurarPalabrasOcultas() {
+        // Crear filas de TextViews para cada palabra en el catálogo de palabras ocultas
         int[] guias = {R.id.guideline1, R.id.guideline2, R.id.guideline3, R.id.guideline4, R.id.guideline5};
 
+        // Recorrer las guías y las palabras ocultas
         for (int i = 0; i < guias.length; i++) {
+            // Obtener la palabra oculta en la posición i
             String palabraOculta = catalogoPalabrasOcultas.get(i);
             if (palabraOculta != null) {
                 int numLetras = palabraOculta.length();
                 CtextViews = crearFilaTextViewsGood(guias[i], numLetras);
+                // Establecer un tamaño fijo para cada TextView
                 for (TextView textView : CtextViews) {
 
                     GradientDrawable gradientDrawable = new GradientDrawable();
@@ -333,9 +371,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Asigna letras a los botones del círculo y configura un OnClickListener para cada botón.
+     *
+     * @param palabra La palabra que se va a asignar a los botones.
+     */
     private void asignarLetrasABotones(String palabra) {
         // Dividir la palabra en letras
         char[] letras = palabra.toCharArray();
+
+        letrasCirculo.clear();
 
         // Recorrer los botones de letras en el círculo
         for (int i = 0; i < btnIdsLetra.length; i++) {
@@ -344,6 +389,10 @@ public class MainActivity extends AppCompatActivity {
             if (i < letras.length) {
                 // Asignar la letra al botón
                 button.setText(String.valueOf(letras[i]));
+
+                letrasCirculo.add(letras[i]);
+                contadorLetras++;
+
                 // Habilitar el botón y hacerlo visible
                 button.setEnabled(true);
                 button.setVisibility(View.VISIBLE);
@@ -372,9 +421,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Borra el contenido del TextView que muestra la palabra y habilita todos los botones de letras.
+     * Este método se ejecuta cuando se llama a la acción asociada con la vista.
+     *
+     * @param view botón clear.
+     */
     public void clearPalabra(View view) {
         textViewPalabra.setText("");
-        for (int btnId : btnIdsLetra) {
+
+        // Itera sobre todos los IDs de los botones de letras.
+        List<Integer> btnIdsList = new ArrayList<>();
+        for (int id : btnIdsLetra) {
+            btnIdsList.add(id);
+        }
+        Iterator<Integer> iterator = btnIdsList.iterator();
+        while (iterator.hasNext()) {
+            int btnId = iterator.next();
             Button button = findViewById(btnId);
             button.setEnabled(true);
             button.setTextColor(Color.WHITE);
@@ -382,23 +445,47 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void randomCircle() {
-        if(letrasCirculo.size() == btnIdsLetra.length) {
-            Collections.shuffle(letrasCirculo);
-            for (int i = 0; i < btnIdsLetra.length; i++) {
-                Button button = findViewById(btnIdsLetra[i]);
-                button.setText(String.valueOf(letrasCirculo.get(i)));
+        // Mezcla aleatoriamente los elementos en 'letrasCirculo'.
+        Collections.shuffle(letrasCirculo);
+
+        for (int i = 0; i < btnIdsLetra.length; i++) {
+            Button button = findViewById(btnIdsLetra[i]);
+            if (i < letrasCirculo.size()) {
+                char letra = letrasCirculo.get(i);
+                // Verificar si 'letra' es una letra válida
+                if (Character.isLetter(letra)) {
+                    // Asignar la letra al botón
+                    button.setText(String.valueOf(letra));
+                    // Habilitar el botón y hacerlo visible
+                    button.setEnabled(true);
+                    button.setVisibility(View.VISIBLE);
+                } else {
+                    // Si 'letra' no es una letra válida, desactivar el botón y hacerlo invisible
+                    button.setEnabled(false);
+                    button.setVisibility(View.INVISIBLE);
+                }
+            } else {
+                // Si no hay más letras, desactivar el botón y hacerlo invisible
+                button.setEnabled(false);
+                button.setVisibility(View.INVISIBLE);
+                button.setText("");
             }
-        } else {
-            Log.e("Error", "No hay suficientes letras en el círculo");
         }
     }
 
+    /**
+     * Muestra una ventana emergente (AlertDialog) con un resumen de las palabras acertadas.
+     * La ventana incluye el número de palabras acertadas y posibles, y una lista de palabras
+     * con algunas resaltadas en rojo.
+     */
     public void mostrarVentanaEmergeneteBonus() {
+        // Crea un nuevo AlertDialog.Builder con el contexto actual.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        // ASIGNAR TÍTULO
+        // Asigna el título al AlertDialog
         builder.setTitle("Encertades (" + paraulesEncertades + " de " + paraulesPosiblesSolucions +"): \n");
 
+        // Construye el mensaje con las palabras acertadas.
         StringBuilder message = new StringBuilder();
         for (Iterator<Map.Entry<String, Integer>> it = catalogoSolucionesEncontradas.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<String, Integer> entry = it.next();
@@ -409,17 +496,31 @@ public class MainActivity extends AppCompatActivity {
             if(color == Color.RED) {
                 message.append("<font color='red'>").append(palabra.toLowerCase()).append("</font><br>");
             } else {
-                message.append(palabra.toLowerCase()).append("<br>");
+                message.append(palabra.toLowerCase()).append(", ");
             }
         }
 
+        // Establece el mensaje del AlertDialog con las palabras formateadas en HTML.
         builder.setMessage(Html.fromHtml(message.toString()));
         builder.setPositiveButton("OK", null);
         AlertDialog dialog = builder.create();
         dialog.show();
+
+        //builder.setPositiveButton("OK", null);
+        //AlertDialog dialog = builder.create();
+        //dialog.show();
     }
 
+    /**
+     * Crea una fila de TextViews dentro de un LinearLayout y los agrega a un ConstraintLayout.
+     * Cada TextView se configura con un tamaño fijo, color de fondo azul, texto centrado y en negrita.
+     *
+     * @param guia El ID del View que se usará como guía para las restricciones de posición del LinearLayout.
+     * @param lletres El número de TextViews a crear.
+     * @return Un array de TextViews creados.
+     */
     public TextView[] crearFilaTextViewsGood(int guia, int lletres) {
+        // Crear un array de TextViews con el tamaño especificado.
         TextView[] textViews = new TextView[lletres];
 
         // Establecer un tamaño fijo para cada TextView
@@ -440,6 +541,7 @@ public class MainActivity extends AppCompatActivity {
         constraintSet.connect(linearLayout.getId(), ConstraintSet.TOP, guia, ConstraintSet.TOP, 0);
         constraintSet.applyTo(constraintLayout);
 
+        // Crear y configurar cada TextView.
         for (int i = 0; i < lletres; i++) {
             TextView textView = new TextView(this);
             textView.setId(View.generateViewId());
@@ -460,29 +562,68 @@ public class MainActivity extends AppCompatActivity {
         return textViews;
     }
 
-    public static boolean esPalabraSolucio(String palabra1, String palabra2) {
+    /**
+     * Verifica si todas las letras de 'palabra2' están disponibles en 'palabra1' en las mismas cantidades.
+     * También verifica que ambas palabras sean iguales.
+     *
+     * @param palabra1 La palabra de referencia que contiene las letras disponibles.
+     * @param palabra2 La palabra que se va a verificar.
+     * @return true si todas las letras de 'palabra2' están disponibles en 'palabra1' y ambas palabras son iguales; false en caso contrario.
+     */
+    public static boolean verificadorPalabra(String palabra1, String palabra2) {
+        // Construir un catálogo de letras disponibles en 'palabra1'
         Map<Character, Integer> letrasDisponibles = construirCatalogo(palabra1);
 
         // Recorrer las letras de la palabra2
-        for (char letra : palabra2.toCharArray()) {
+        char[] palabra2Array = palabra2.toCharArray();
+        List<Character> palabra2List = new ArrayList<>();
+        for (int i = 0; i < palabra2Array.length; i++) {
+            palabra2List.add(palabra2Array[i]);
+        }
+        Iterator<Character> iterator = palabra2List.iterator();
+        while (iterator.hasNext()) {
+            char letra = iterator.next();
             // Verificar si la letra está disponible en la palabra1
             if (!letrasDisponibles.containsKey(letra) || letrasDisponibles.get(letra) == 0) {
                 return false; // La letra no está disponible en la palabra1 o se ha agotado
             }
+
+            // Decrementar la cantidad de la letra disponible.
             letrasDisponibles.put(letra, letrasDisponibles.get(letra) - 1);
         }
+
         // Verificamos que las palabras sean iguales (letras en la misma posición)
         return palabra1.equals(palabra2);
     }
 
+    /**
+     * Construye un catálogo (mapa) de letras y sus cantidades a partir de una palabra.
+     * Este método cuenta la frecuencia de cada letra en la palabra dada.
+     *
+     * @param palabra La palabra de la que se va a construir el catálogo.
+     * @return Un mapa que contiene cada letra y su cantidad correspondiente en la palabra.
+     */
     private static Map<Character, Integer> construirCatalogo(String palabra) {
         Map<Character, Integer> catalogo = new HashMap<>();
-        for (char letra : palabra.toCharArray()) {
+        char[] palabraArray = palabra.toCharArray();
+        List<Character> palabraList = new ArrayList<>();
+        for (int i = 0; i < palabraArray.length; i++) {
+            palabraList.add(palabraArray[i]);
+        }
+        Iterator<Character> iterator = palabraList.iterator();
+        while (iterator.hasNext()) {
+            char letra = iterator.next();
             catalogo.put(letra, catalogo.getOrDefault(letra, 0) + 1);
         }
         return catalogo;
     }
 
+    /**
+     * Muestra una palabra en un conjunto de TextViews en una posición específica.
+     *
+     * @param s La palabra que se va a mostrar.
+     * @param posicion La posición en la que se encuentran los TextViews correspondientes.
+     */
     private void muestraPalabra(String s, int posicion) {
         // Obtener el array de TextViews correspondiente a la posición dada
         TextView[] textViews = obtenerTextViewsPorPosicion(posicion);
@@ -500,7 +641,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Método auxiliar para obtener los TextViews correspondientes a una posición dada
+    /**
+     * Obtiene el array de TextViews correspondiente a una posición específica.
+     *
+     * @param posicion La posición para la cual se deben obtener los TextViews.
+     * @return Un array de TextViews en la posición especificada.
+     */
     private TextView[] obtenerTextViewsPorPosicion(int posicion) {
         // Verificar si la posición es válida
         if (posicion >= 0 && posicion < textViewsList.size()) {
@@ -512,18 +658,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Muestra la primera letra de una palabra en un conjunto de TextViews en una posición específica.
+     * Si el TextView correspondiente a la primera posición ya está ocupado, busca otro TextView disponible
+     * para mostrar la letra.
+     *
+     * @param s La palabra de la cual se va a mostrar la primera letra.
+     * @param posicio La posición en la que se encuentran los TextViews correspondientes.
+     */
     private void mostraPrimeraLletra(String s, int posicio){
         // Obtener el array de TextViews correspondiente a la posición dada
         TextView[] textViews = obtenerTextViewsPorPosicion(posicio);
 
         // Verificar si la longitud de la palabra es menor o igual al número de TextViews disponibles
         if (s.length() <= textViews.length) {
+
             // Verificar si la posición ya está ocupada
             if (textViews[0].getText().toString().isEmpty()) {
+
                 // Si no está ocupada, mostrar la letra en el TextView correspondiente
                 textViews[0].setTextColor(Color.WHITE);
                 textViews[0].setText(String.valueOf(s.charAt(0)));
             } else {
+
                 // Si está ocupada, buscar otra línea donde no esté ocupada
                 for (int i = 1; i < textViews.length; i++) {
                     if (textViews[i].getText().toString().isEmpty()) {
@@ -539,6 +696,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Reinicia el juego, restableciendo las variables y creando nuevas filas de TextViews para cada palabra en el nuevo catálogo.
+     *
+     * El método también elimina los TextViews existentes, limpia las listas de palabras y soluciones, y actualiza los colores de las casillas y el círculo.
+     */
     private void reiniciarJuego() {
         // Colores y recursos de círculo
         int[] colorCasilla = {Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.CYAN, Color.RED, Color.BLUE};
@@ -550,20 +712,23 @@ public class MainActivity extends AppCompatActivity {
         // Eliminar todos los TextViews existentes
         for (Iterator<TextView[]> it = textViewsList.iterator(); it.hasNext(); ) {
             TextView[] textViews = it.next();
-            for (TextView textView : textViews) {
+            List<TextView> textViewList = Arrays.asList(textViews);
+            Iterator<TextView> textViewIterator = textViewList.iterator();
+            while (textViewIterator.hasNext()) {
+                TextView textView = textViewIterator.next();
                 ((ViewGroup) textView.getParent()).removeView(textView); // Eliminar el TextView del layout
             }
         }
-        textViewsList.clear(); // Limpiar la lista de TextViews
+        textViewsList = new ArrayList<>();// Limpiar la lista de TextViews
 
         colorIndex = (colorIndex + 1) % colorCasilla.length; // Actualizar el índice de color
 
         // Generar un nuevo catálogo de palabras para la partida
-        catalogoPalabras.clear();
-        catalogoLongitudes.clear();
-        catalogoSoluciones.clear();
-        catalogoPalabrasOcultas.clear();
-        catalogoSolucionesEncontradas.clear();
+        catalogoPalabras = new HashMap<>();
+        catalogoLongitudes = new HashMap<>();
+        catalogoSoluciones = new HashMap<>();
+        catalogoPalabrasOcultas = new TreeMap<>();
+        catalogoSolucionesEncontradas = new HashMap<>();
 
         leerArchivo();
         inicializarVariables();
@@ -598,26 +763,46 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Habilita todas las vistas hijos de un ViewGroup, excepto los botones de imagen específicos.
+     *
+     * @param parent El ID del ViewGroup que contiene las vistas a habilitar.
+     */
     private void enableViews(int parent) {
         ViewGroup viewGroup = (ViewGroup) findViewById(parent);
         for (int i = 0; i < viewGroup.getChildCount(); i++) {
             View child = viewGroup.getChildAt(i);
+
+            // Habilitar la vista si no es uno de los botones de imagen específicos
             if (child.getId() != R.id.imageButton2 && child.getId() != R.id.imageButton3) {
                 child.setEnabled(true);
             }
         }
     }
 
+    /**
+     * Deshabilita todas las vistas hijos de un ViewGroup, excepto los botones de imagen específicos.
+     *
+     * @param parent El ID del ViewGroup que contiene las vistas a deshabilitar.
+     */
     private void disableViews(int parent) {
         ViewGroup viewGroup = (ViewGroup) findViewById(parent);
         for (int i = 0; i < viewGroup.getChildCount(); i++) {
             View child = viewGroup.getChildAt(i);
+
+            // Deshabilitar la vista si no es uno de los botones de imagen específicos
             if (child.getId() != R.id.imageButton2 && child.getId() != R.id.imageButton3) {
                 child.setEnabled(false);
             }
         }
     }
 
+    /**
+     * Muestra un mensaje Toast con la cadena de texto especificada.
+     *
+     * @param s La cadena de texto que se mostrará en el mensaje Toast.
+     * @param llarg Indica si la duración del mensaje Toast será larga (true) o corta (false).
+     */
     private void mostraMissatge ( String s , boolean llarg ){
         Context context = getApplicationContext () ;
         CharSequence text = s;
@@ -630,6 +815,9 @@ public class MainActivity extends AppCompatActivity {
         toast.show();
     }
 
+    /**
+     * Lee un archivo de recursos de texto y agrega cada línea como una palabra al juego.
+     */
     private void leerArchivo() {
         try {
             InputStream is = getResources().openRawResource(R.raw.paraules2);
@@ -645,6 +833,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Agrega una palabra al catálogo de palabras y al catálogo de palabras por longitud.
+     *
+     * @param line La línea del archivo que contiene la palabra en formato "palabraConAcentos;palabraSinAcentos".
+     */
     public void agregarPalabra(String line) {
         String[] partes = line.split(";");
         if (partes.length == 2) {
@@ -666,12 +859,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Obtiene una palabra aleatoria del catálogo de palabras por longitud.
+     *
+     * @return Una palabra aleatoria del catálogo.
+     */
     private String obtenerPalabraAleatoria() {
         // Obtener la longitud máxima de las palabras
         Collections.max(catalogoLongitudes.keySet());
 
         // Generar un número aleatorio entre 3 y el máximo número de letras
-        int longitudAleatoria = new Random().nextInt(3) + 4; //preguntar si debe ser entre 3 y 7 o como esta
+        int longitudAleatoria = new Random().nextInt(3) + 4;
         System.out.println("Longitud aleatorio de letraS "+ longitudAleatoria);
 
         // Obtener el conjunto de palabras de la longitud aleatoria
@@ -680,7 +878,7 @@ public class MainActivity extends AppCompatActivity {
         // Si no hay palabras de esa longitud, regresar null
         while (palabrasLongitudAleatoria == null || palabrasLongitudAleatoria.isEmpty()) {
             System.out.println("No se ha encontrado palabras con esta longitud, seguimos buscando ...");
-            longitudAleatoria = new Random().nextInt(3) + 4; //peguntar si debe ser entre 3 y 7 o como esta
+            longitudAleatoria = new Random().nextInt(3) + 4;
             System.out.println("Longitud aleatorio de letra "+ longitudAleatoria);
 
             // Obtener el conjunto de palabras de la longitud aleatoria
@@ -692,53 +890,80 @@ public class MainActivity extends AppCompatActivity {
         // Elegir una palabra aleatoria de ese conjunto
         String palabraAleatoria = listaPalabrasLongitudAleatoria.get(new Random().nextInt(listaPalabrasLongitudAleatoria.size()));
 
-        // Agregar la palabra aleatoria al catálogo de soluciones
-        if (!catalogoSoluciones.containsKey(palabraAleatoria.length())) {
-            catalogoSoluciones.put(palabraAleatoria.length(), new TreeSet<>());
+        // Agregar la palabra con acentos al catálogo de soluciones
+        Iterator<Map.Entry<String, String>> iterator = catalogoPalabras.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
+            if (entry.getKey().equals(palabraAleatoria)) {
+                if (!catalogoSoluciones.containsKey(entry.getValue().length())) {
+                    catalogoSoluciones.put(entry.getValue().length(), new TreeSet<>());
+                }
+                catalogoSoluciones.get(entry.getValue().length()).add(entry.getValue());
+            }
         }
-        catalogoSoluciones.get(palabraAleatoria.length()).add(palabraAleatoria);
-
+        System.out.println("Palabra aleatoriaA: " + palabraAleatoria);
         return palabraAleatoria;
     }
 
-    private void obtenerCatalogoSoluciones(String palabraAleatoria) {
+    /**
+     * Verifica si una palabra aleatoria puede ser una solución para el juego, comparándola con el catálogo de palabras.
+     *
+     * @param palabraAleatoria La palabra aleatoria seleccionada para el juego.
+     * @param catalogoIterator El iterador sobre el catálogo de palabras.
+     */
+    private void esSolucio(String palabraAleatoria, Iterator<String> catalogoIterator) {
         // Crear un mapa de letras únicas de la palabra aleatoria y sus recuentos
         Map<Character, Integer> letrasPalabraAleatoria = new HashMap<>();
-        for (char letra : palabraAleatoria.toCharArray()) {
+        char[] palabraAleatoriaArray = palabraAleatoria.toCharArray();
+        List<Character> palabraAleatoriaList = new ArrayList<>();
+        for (int i = 0; i < palabraAleatoriaArray.length; i++) {
+            palabraAleatoriaList.add(palabraAleatoriaArray[i]);
+        }
+        Iterator<Character> iterator = palabraAleatoriaList.iterator();
+        while (iterator.hasNext()) {
+            char letra = iterator.next();
             letrasPalabraAleatoria.put(letra, letrasPalabraAleatoria.getOrDefault(letra, 0) + 1);
         }
-        int longitud = palabraAleatoria.length();
-        for (int i = 1; i < 5; i++) {
-            if(longitud - i < 3){
-                break;
+
+        while (catalogoIterator.hasNext()) {
+            String palabra = catalogoIterator.next();
+            // Verificar si la longitud de la palabra está entre 3 y 7
+            if (palabra.length() < 3 || palabra.length() > 7) {
+                continue;
             }
-            Set<String> palabrasLongitud = catalogoLongitudes.get(longitud - i);
-            while ((palabrasLongitud == null || palabrasLongitud.isEmpty() || palabrasLongitud.size() < 5) && (longitud - i) > 3) {
-                palabrasLongitud = catalogoLongitudes.get(longitud - i);
+
+            // Crear una copia de las letras únicas de la palabra aleatoria y sus recuentos
+            Map<Character, Integer> letrasRestantes = new HashMap<>(letrasPalabraAleatoria);
+            boolean contieneTodasLasLetras = true;
+            char[] palabraArray = palabra.toCharArray();
+            List<Character> palabraList = new ArrayList<>();
+            for (int i = 0; i < palabraArray.length; i++) {
+                palabraList.add(palabraArray[i]);
             }
-            for (Iterator<String> it = palabrasLongitud.iterator(); it.hasNext(); ) {
-                String palabra = it.next();
-                // Crear una copia de las letras únicas de la palabra aleatoria y sus recuentos
-                Map<Character, Integer> letrasRestantes = new HashMap<>(letrasPalabraAleatoria);
-                boolean contieneTodasLasLetras = true;
-                for (char letra : palabra.toCharArray()) {
-                    if (!letrasRestantes.containsKey(letra) || letrasRestantes.get(letra) == 0) {
-                        contieneTodasLasLetras = false;
-                        break;
-                    }
-                    letrasRestantes.put(letra, letrasRestantes.get(letra) - 1);
+            Iterator<Character> iterator1 = palabraList.iterator();
+            while (iterator1.hasNext()) {
+                char letra = iterator1.next();
+                if (!letrasRestantes.containsKey(letra) || letrasRestantes.get(letra) == 0) {
+                    contieneTodasLasLetras = false;
+                    break;
                 }
-                if (contieneTodasLasLetras) {
-                    if (!catalogoSoluciones.containsKey(palabra.length())) {
-                        catalogoSoluciones.put(palabra.length(), new TreeSet<>());
-                    }
-                    catalogoSoluciones.get(palabra.length()).add(palabra);
-                    paraulesPosiblesSolucions++;
+                letrasRestantes.put(letra, letrasRestantes.get(letra) - 1);
+            }
+            if (contieneTodasLasLetras) {
+                if (!catalogoSoluciones.containsKey(palabra.length())) {
+                    catalogoSoluciones.put(palabra.length(), new TreeSet<>());
                 }
+                catalogoSoluciones.get(palabra.length()).add(palabra);
+                paraulesPosiblesSolucions++;
             }
         }
     }
 
+    /**
+     * Selecciona las palabras ocultas para el juego, incluyendo la palabra aleatoria y otras soluciones.
+     *
+     * @param palabraAleataroria La palabra aleatoria seleccionada para el juego.
+     */
     private void seleccionarPalabrasOcultas(String palabraAleataroria) {
         int longitud = palabraAleataroria.length();
         Set<String> todasLasSoluciones = new HashSet<>();
@@ -781,6 +1006,9 @@ public class MainActivity extends AppCompatActivity {
         sortCatalogoPalabrasOcultas();
     }
 
+    /**
+     * Ordena el catálogo de palabras ocultas por longitud y alfabéticamente.
+     */
     private void sortCatalogoPalabrasOcultas() {
         // Crear una lista para almacenar los valores del mapa
         List<String> listaDeValores = new ArrayList<>(catalogoPalabrasOcultas.values());
